@@ -65,7 +65,7 @@ def classify_rep(rep: Dict) -> Set[str]:
             labels.add("bad_knee_alignment")
         if avg_head > 105 or avg_head < 90:
             labels.add("bad_head")
-        if avg_toe_dist < 0.003:
+        if avg_toe_dist < 0.05:
             labels.add("bad_inner_thigh")
 
     return labels
@@ -92,3 +92,10 @@ def analyze_json(filepath: str) -> List[Dict]:
         })
 
     return results
+
+if __name__ == "__main__":
+    # Example usage
+    filepath = "temp_data/bad_inner_thigh/rep_metrics_0918_squat_000029.json"
+    analysis_results = analyze_json(filepath)
+    for result in analysis_results:
+        print(f"Rep {result['rep_number']}: {', '.join(result['labels'])}")
