@@ -1,0 +1,26 @@
+{
+    "bad_toe": {
+        "text": "Heel elevation",
+        "description": "Your heels seem to be off the ground. This can be dangerous in weighted squats because it becomes very difficult to balance yourself. However, in bodyweight squats, elevating your heels is acceptable, unless you are looking to improve your ankle mobility. Improving ankle mobility or placing a plate underneath your foot is a good way to approach this issue."
+    },
+    "good": {
+        "text": "No mistakes",
+        "description": "Good job!"
+    },
+    "bad_inner_thigh": {
+        "text": "Knees caving",
+        "description": "Your knees seem to be closing in during your squats. This is usually a sign of weak abductor muscles. Knee caving can lead to injuries on heavier weights."
+    },
+    "bad_shallow": {
+        "text": "Insufficient Depth",
+        "description": "Your squat is not deep enough. Depth is important to maximally stimulate the quad muscles. Try to make your upper leg parallel to the ground. If your mobility does not allow you to do so, try to do hip mobility and ankle mobility exercises. Using weightlifting shoes or placing a plate underneath your foot are 2 popular ways to increase squat depth."
+    },
+    "bad_back_warp": {
+        "text": "Leaning over",
+        "description": "It seems that you are leaning over during your squat. This is not inherently dangerous, but it stimulates your lower back and glutes more than your quads. If you want to bias your quads, it is important to stay upright as you go down. Front squats and heel elevation like squatting shoes or a plate underneath your foot can help with this."
+    },
+    "bad_head": {
+        "text": "Head tilt",
+        "description": "It seems that your head is tilting too far back or too far ahead during your squat. It is important to maintain a neutral spine to avoid injuries. Try doing lighter weights for higher reps if you are struggling to maintain a neutral spine."
+    }
+}

@@ -1,5 +1,3 @@
-# backend/json_analyzer.py
-
 import json
 from typing import List, Dict, Set
 
@@ -49,25 +47,26 @@ def classify_rep(rep: Dict) -> Set[str]:
     avg_symmetry = compute_avg(rep, "symmetry_score")
     avg_alignment = compute_avg(rep, "alignment_score")
     avg_head = compute_avg(rep, "head_angle")
-    avg_toe_dist = compute_avg(rep, "toe_distance")
-
-    # Rule-based logic
+    avg_toe_dist = max(rep['toe_distance'])
+    back_angles =min(rep['back_angle'])
+    max_back_angle = max(rep['back_angle'])
+    min_knee = min(rep['knee_angle'])
+    min_heel= min(rep['heel_angle'])
     if avg_knee < 100 and avg_torso < 50 and avg_symmetry < 30 and avg_alignment > 0.8:
         labels.add("good")
     else:
-        if avg_knee > 120:
-            labels.add("bad_depth")
-        if avg_torso > 70:
-            labels.add("bad_torso")
-        if avg_symmetry > 40:
-            labels.add("bad_symmetry")
-        if avg_alignment < 0.5:
-            labels.add("bad_knee_alignment")
-        if avg_head > 105 or avg_head < 90:
+        if min_knee > 60:
+            labels.add("bad_shallow")
+        if back_angles < 30 or max_back_angle < 100:
+            labels.add("bad_back_warp")
+        # if min_heel < 75:
+        #     labels.add("bad_toe")
+        if avg_head > 110 or avg_head < 90:
             labels.add("bad_head")
-        if avg_toe_dist < 0.05:
+        if avg_toe_dist > 0.02:
             labels.add("bad_inner_thigh")
-
+    if len(labels)==0:
+        labels.add("good")
     return labels
 
 
@@ -92,10 +91,3 @@ def analyze_json(filepath: str) -> List[Dict]:
         })
 
     return results
-
-if __name__ == "__main__":
-    # Example usage
-    filepath = "temp_data/bad_inner_thigh/rep_metrics_0918_squat_000029.json"
-    analysis_results = analyze_json(filepath)
-    for result in analysis_results:
-        print(f"Rep {result['rep_number']}: {', '.join(result['labels'])}")
