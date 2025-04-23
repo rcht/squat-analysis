@@ -2,17 +2,32 @@ import json
 from typing import List, Dict, Set
 from torch.nn.utils.rnn import pad_sequence
 import torch.nn as nn
-
-class SquatClassifier(nn.Module):
-    def __init__(self, input_size, hidden_size, num_classes):
-        super(SquatClassifier, self).__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
-        self.fc = nn.Linear(hidden_size, num_classes)
-
+import torch.nn.functional as F
+class PureConvClassifier(nn.Module):
+    def __init__(self, in_ch=9, conv_ch=[64,128,256], kernel=3, num_classes=6):
+        super().__init__()
+        layers = []
+        prev = in_ch
+        for ch in conv_ch:
+            layers += [
+                nn.Conv1d(prev, ch, kernel, padding=kernel//2),
+                nn.BatchNorm1d(ch),
+                nn.ReLU(),
+                nn.MaxPool1d(2)
+            ]
+            prev = ch
+        self.net = nn.Sequential(*layers)
+        self.global_pool = nn.AdaptiveMaxPool1d(1)
+        self.fc1 = nn.Linear(prev, prev//2)
+        self.fc2 = nn.Linear(prev//2, num_classes)
+        
     def forward(self, x_packed):
-        packed_output, (h_n, c_n) = self.lstm(x_packed)
-        out = self.fc(h_n[-1])  # Final hidden state from last LSTM layer
-        return out
+        x, lengths = nn.utils.rnn.pad_packed_sequence(x_packed, batch_first=True)
+        x = x.transpose(1,2)              
+        x = self.net(x)                   
+        x = self.global_pool(x).squeeze(2) 
+        x = F.relu(self.fc1(x))
+        return self.fc2(x)
 
 import torch
 from torch.utils.data import Dataset
@@ -156,34 +171,58 @@ def analyze_json_lstm(filepath: str, model_path: str) -> List[Dict]:
         List[Dict]: List of classification results per rep.
     """
     # Load the LSTM model
-    model = SquatClassifier(input_size=9, hidden_size=64, num_classes=6)  # Adjust input size and hidden size as needed
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = PureConvClassifier().to(device)  # Adjust input size and hidden size as needed
     # Load the trained model weights
     model.load_state_dict(torch.load(model_path))
     model.eval()
-
-    reps = load_json(filepath)
+    pedofile = load_json(filepath)
+    actual_list = []
+    for j in pedofile:
+        actual_list.append(j)
+    future=['temp_data/bad_inner_thigh', 'temp_data/bad_shallow', 'temp_data/good', 'temp_data/bad_head', 
+            'temp_data/bad_back_warp', 'temp_data/bad_toe']
+    pedo_input = [torch.tensor([
+                data["knee_angle"],
+                data["torso_angle"],
+                data["hip_angle"],
+                data["symmetry_score"],
+                data["alignment_score"],
+                data["head_angle"],
+                data["inter_thigh_angle"],
+                data["heel_angle"],
+                data["back_angle"]
+            ], dtype=torch.float).T  
+            for data in actual_list]
     results = []
     classes=os.listdir("temp_data")
-    mapping = {i: classes[i] for i in range(len(classes))}
-    dataset_here=SquatRepDataset(reps, [0]*len(reps))  # Dummy labels for dataset creation
-    dataloader = torch.utils.data.DataLoader(dataset_here, batch_size=1, collate_fn=squat_collate_fn)
+    mapping = {i: future[i].split('/')[-1] for i in range(len(classes))}
     i=1
-    for data,length,label in dataloader:
-        # Prepare input data for LSTM
-        model.eval()
-        with torch.no_grad():
-                # Pack sequences
-                packed_input = nn.utils.rnn.pack_padded_sequence(data, length, batch_first=True, enforce_sorted=False)
-                
-                # Forward pass
-                packed_output, (h_n, c_n) = model.lstm(packed_input)
-                logits = model.fc(h_n[-1])
-                
-                # Get predicted class
-                _, predicted = torch.max(logits, 1)
-        results.append({
-            "rep_number": i,
-            "labels": [mapping[int(predicted.item())]]  # Assuming labels are integers
-        })
-        i+=1
+    model.eval()
+    with torch.no_grad():
+        for seq in pedo_input:
+            seq = seq.to(device)
+
+            seq = seq.unsqueeze(0)
+
+            lengths = [seq.size(1)]    
+
+            packed = nn.utils.rnn.pack_padded_sequence(
+                seq,
+                lengths,
+                batch_first=True,
+                enforce_sorted=False
+            )
+
+            logits = model(packed)     
+            probs  = torch.sigmoid(logits)
+            preds  = (probs >= 0.5).long()
+            # print(torch.argmax(probs))
+            # print(f"preds: {preds.squeeze(0)}")
+            index=[i for i in range(len(preds.squeeze(0))) if preds.squeeze(0)[i] == 1]
+            results.append({
+                "rep_number": i,
+                "labels": [mapping[i] for i in index]  # Assuming labels are integers
+            })
+            i+=1
     return results

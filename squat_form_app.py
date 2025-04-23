@@ -69,7 +69,7 @@ if uploaded_file is not None:
             if option == "Rule Based":
                 results = json_analyzer.analyze_json(json_path)
             elif option == "LSTM Based":
-                results = json_analyzer.analyze_json_lstm(json_path,"squat_classifier.pth")
+                results = json_analyzer.analyze_json_lstm(json_path,"best_model.pth")
             st.markdown("### Analysis Results")
             for rep in results:
                 with st.container():
