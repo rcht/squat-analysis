@@ -176,13 +176,13 @@ def analyze_json_lstm(filepath: str, model_path: str) -> List[Dict]:
     # Load the trained model weights
     model.load_state_dict(torch.load(model_path))
     model.eval()
-    pedofile = load_json(filepath)
+    file = load_json(filepath)
     actual_list = []
-    for j in pedofile:
+    for j in file:
         actual_list.append(j)
     future=['temp_data/bad_inner_thigh', 'temp_data/bad_shallow', 'temp_data/good', 'temp_data/bad_head', 
             'temp_data/bad_back_warp', 'temp_data/bad_toe']
-    pedo_input = [torch.tensor([
+    inputs = [torch.tensor([
                 data["knee_angle"],
                 data["torso_angle"],
                 data["hip_angle"],
@@ -200,7 +200,7 @@ def analyze_json_lstm(filepath: str, model_path: str) -> List[Dict]:
     i=1
     model.eval()
     with torch.no_grad():
-        for seq in pedo_input:
+        for seq in inputs:
             seq = seq.to(device)
 
             seq = seq.unsqueeze(0)
