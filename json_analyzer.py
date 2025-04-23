@@ -1,5 +1,53 @@
 import json
 from typing import List, Dict, Set
+from torch.nn.utils.rnn import pad_sequence
+import torch.nn as nn
+
+class SquatClassifier(nn.Module):
+    def __init__(self, input_size, hidden_size, num_classes):
+        super(SquatClassifier, self).__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
+        self.fc = nn.Linear(hidden_size, num_classes)
+
+    def forward(self, x_packed):
+        packed_output, (h_n, c_n) = self.lstm(x_packed)
+        out = self.fc(h_n[-1])  # Final hidden state from last LSTM layer
+        return out
+
+import torch
+from torch.utils.data import Dataset
+
+class SquatRepDataset(Dataset):
+    def __init__(self, data_list, label_list):
+        self.data_list = data_list  # list of dicts like the one you provided
+        self.label_list = label_list
+
+    def __len__(self):
+        return len(self.data_list)
+
+    def __getitem__(self, idx):
+        data = self.data_list[idx]
+        sequence = torch.tensor([
+            data["knee_angle"],
+            data["torso_angle"],
+            data["hip_angle"],
+            data["symmetry_score"],
+            data["alignment_score"],
+            data["head_angle"],
+            data["heel_angle"],
+            data["back_angle"],
+            data["inter_thigh_angle"],
+        ], dtype=torch.float).T  # shape: [seq_len, num_features]
+
+        label = torch.tensor(self.label_list[idx], dtype=torch.long)
+        return sequence, label
+
+def squat_collate_fn(batch):
+    sequences, labels = zip(*batch)
+    lengths = torch.tensor([seq.shape[0] for seq in sequences])  # original lengths
+    padded_sequences = pad_sequence(sequences, batch_first=True)
+    labels = torch.stack(labels)
+    return padded_sequences, lengths, labels
 
 def load_json(filepath: str) -> List[Dict]:
     """
@@ -90,4 +138,52 @@ def analyze_json(filepath: str) -> List[Dict]:
             "labels": list(classification)
         })
 
+    return results
+
+import torch
+import torch.nn as nn
+import glob
+import os
+def analyze_json_lstm(filepath: str, model_path: str) -> List[Dict]:
+    """
+    Analyze and classify all reps in a JSON file using LSTM model.
+
+    Args:
+        filepath (str): Path to the JSON file.
+        model_path (str): Path to the LSTM model.
+
+    Returns:
+        List[Dict]: List of classification results per rep.
+    """
+    # Load the LSTM model
+    model = SquatClassifier(input_size=9, hidden_size=64, num_classes=6)  # Adjust input size and hidden size as needed
+    # Load the trained model weights
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+
+    reps = load_json(filepath)
+    results = []
+    classes=os.listdir("temp_data")
+    mapping = {i: classes[i] for i in range(len(classes))}
+    dataset_here=SquatRepDataset(reps, [0]*len(reps))  # Dummy labels for dataset creation
+    dataloader = torch.utils.data.DataLoader(dataset_here, batch_size=1, collate_fn=squat_collate_fn)
+    i=1
+    for data,length,label in dataloader:
+        # Prepare input data for LSTM
+        model.eval()
+        with torch.no_grad():
+                # Pack sequences
+                packed_input = nn.utils.rnn.pack_padded_sequence(data, length, batch_first=True, enforce_sorted=False)
+                
+                # Forward pass
+                packed_output, (h_n, c_n) = model.lstm(packed_input)
+                logits = model.fc(h_n[-1])
+                
+                # Get predicted class
+                _, predicted = torch.max(logits, 1)
+        results.append({
+            "rep_number": i,
+            "labels": [mapping[int(predicted.item())]]  # Assuming labels are integers
+        })
+        i+=1
     return results

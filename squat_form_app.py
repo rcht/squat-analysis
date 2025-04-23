@@ -55,14 +55,21 @@ if uploaded_file is not None:
                 angles["hip_angles"],
                 angles["toe_distances"],
                 angles["heel_angles"],
+                angles["inter_thigh_angles"],
                 angles["back_angles"],
                 rep_range,
                 os.path.splitext(os.path.basename(temp_file.name))[0],
             )
 
             json_path = f'rep_metrics_{os.path.splitext(os.path.basename(temp_file.name))[0]}.json'
-            results = json_analyzer.analyze_json(json_path)
-
+            option = st.selectbox(
+            "Choose an option to analyze the JSON file:",
+            ["Rule Based", "LSTM Based"]
+            )
+            if option == "Rule Based":
+                results = json_analyzer.analyze_json(json_path)
+            elif option == "LSTM Based":
+                results = json_analyzer.analyze_json_lstm(json_path,"squat_classifier.pth")
             st.markdown("### Analysis Results")
             for rep in results:
                 with st.container():
@@ -75,4 +82,5 @@ if uploaded_file is not None:
                                 st.success(explanation['description'])
                             else:
                                 st.error(explanation['description'])
+                
         

@@ -61,6 +61,9 @@ def main_logic(file):
     heel_angles    = []
     back_angles     = []
 
+    # ADDED HERE
+    inter_thigh_angles = []
+
     with mp_pose.Pose(min_detection_confidence=0.5,
                     min_tracking_confidence=0.5) as pose:
 
@@ -131,6 +134,9 @@ def main_logic(file):
                 l_heel_ang = get_angle(l_heel_vec, [0,1,0])
                 back_angle = get_angle(back_vec_avg, thigh_vec_avg)
 
+                # ADDED HERE
+                inter_thigh_angle = get_angle(l_thigh, r_thigh)
+
                 avg_knee    = (l_knee_ang + r_knee_ang)/2
                 avg_torso   = (l_torso_ang + r_torso_ang)/2
                 sym_score   = abs(l_knee_ang - r_knee_ang) + abs(l_torso_ang - r_torso_ang)
@@ -154,6 +160,11 @@ def main_logic(file):
                     symmetry_scores.append(sym_score)
                     alignment_scores.append(align_score)
                     back_angles.append(back_angle)
+
+                    # ADDED HERE
+                    inter_thigh_angles.append(inter_thigh_angle)
+
+
                     # append the new trackers
                     head_angles.append(head_ang)
                     toe_distances.append(toe_dist)
@@ -248,5 +259,6 @@ def main_logic(file):
         "head_angles": head_angles,  
         "toe_distances": toe_distances,  
         "heel_angles": heel_angles , 
-        "back_angles": back_angles  
+        "back_angles": back_angles,
+        "inter_thigh_angles": inter_thigh_angles
     }

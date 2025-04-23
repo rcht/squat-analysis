@@ -1,6 +1,6 @@
 import json
 
-def save_rep_metrics(knee_angles, torso_angles, head_angles, symmetry_scores, alignment_scores, hip_angles, toe_distances,heel_angles,
+def save_rep_metrics(knee_angles, torso_angles, head_angles, symmetry_scores, alignment_scores, hip_angles, toe_distances,heel_angles,inter_thigh_angles,
                      back_angles, rep_ranges, file_name):
     TEMP_OUTPUT = f'rep_metrics_{file_name}.json'
     
@@ -21,6 +21,7 @@ def save_rep_metrics(knee_angles, torso_angles, head_angles, symmetry_scores, al
             "toe_distance":     [float(val) for val in toe_distances[start:end+1]],
             "heel_angle":       [float(val) for val in heel_angles[start:end+1]],
             "back_angle":       [float(val) for val in back_angles[start:end+1]],
+            "inter_thigh_angle": [float(val) for val in inter_thigh_angles[start:end+1]],
         }
         rep_data.append(rep_metrics)
 
