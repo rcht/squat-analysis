@@ -174,7 +174,7 @@ def analyze_json_lstm(filepath: str, model_path: str) -> List[Dict]:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = PureConvClassifier().to(device)  # Adjust input size and hidden size as needed
     # Load the trained model weights
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     model.eval()
     file = load_json(filepath)
     actual_list = []
@@ -195,7 +195,16 @@ def analyze_json_lstm(filepath: str, model_path: str) -> List[Dict]:
             ], dtype=torch.float).T  
             for data in actual_list]
     results = []
-    classes=os.listdir("temp_data")
+    # classes=os.listdir("temp_data")
+    classes = [
+        "bad_back_warp",
+        "bad_head",
+        "bad_inner_thigh",
+        "bad_shallow",
+        "bad_toe",
+        "good"
+    ]
+
     mapping = {i: future[i].split('/')[-1] for i in range(len(classes))}
     i=1
     model.eval()

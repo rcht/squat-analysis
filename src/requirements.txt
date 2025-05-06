@@ -1,6 +1,0 @@
-opencv-python
-mediapipe
-numpy
-matplotlib
-scikit-learn
-streamlit

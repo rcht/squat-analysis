@@ -61,7 +61,7 @@ if uploaded_file is not None:
                 os.path.splitext(os.path.basename(temp_file.name))[0],
             )
 
-            json_path = f'rep_metrics_{os.path.splitext(os.path.basename(temp_file.name))[0]}.json'
+            json_path = f'/tmp/rep_metrics_{os.path.splitext(os.path.basename(temp_file.name))[0]}.json'
             option = st.selectbox(
             "Choose an option to analyze the JSON file:",
             ["Rule Based", "LSTM Based"]
@@ -69,7 +69,7 @@ if uploaded_file is not None:
             if option == "Rule Based":
                 results = json_analyzer.analyze_json(json_path)
             elif option == "LSTM Based":
-                results = json_analyzer.analyze_json_lstm(json_path,"best_model.pth")
+                results = json_analyzer.analyze_json_lstm(json_path,"checkpoints/best_model.pth")
             st.markdown("### Analysis Results")
             for rep in results:
                 with st.container():

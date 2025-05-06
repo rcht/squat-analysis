@@ -2,7 +2,7 @@ import json
 
 def save_rep_metrics(knee_angles, torso_angles, head_angles, symmetry_scores, alignment_scores, hip_angles, toe_distances,heel_angles,inter_thigh_angles,
                      back_angles, rep_ranges, file_name):
-    TEMP_OUTPUT = f'rep_metrics_{file_name}.json'
+    TEMP_OUTPUT = f'/tmp/rep_metrics_{file_name}.json'
     
 
     rep_data = []
